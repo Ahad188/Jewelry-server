@@ -143,10 +143,20 @@ app.delete('/carts/:id', async (req, res) => {
      console.log("result 343423",delateResult);
      res.send({ insertResult, delateResult});
    })
+   app.get('/history',  async(req,res)=>{
+     const result = await paymentCollection.find().toArray()
+     res.send(result)
+   })
+    
 
-
-
-
+   app.delete('/history/:id', async (req, res) => {
+     const id = req.params.id;
+     
+     const query = { _id: new ObjectId(id) };
+     const result = await  paymentCollection.deleteOne(query);
+      
+     res.send(result);
+   })
 
 
 

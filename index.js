@@ -63,7 +63,6 @@ async function run() {
      const token = jwt.sign(user, process.env.Access_TOKEN, { expiresIn: '1h' })
      res.send({token})
 })
-
      // get product
     app.get('/product',async (req,res)=>{
      const result = await productCollection.find().toArray();
@@ -78,7 +77,7 @@ async function run() {
 
 
 // users api
-app.get('/users', async(req, res)=>{
+app.get('/users',verifyJWT, async(req, res)=>{
      const result = await usersCollection.find().toArray()
      res.send(result)
 })
@@ -95,7 +94,18 @@ app.post('/users', async(req,res)=>{
      const result = await usersCollection.insertOne(user)
      res.send(result);
 })
+app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+     const email = req.params.email;
 
+     if (req.decoded.email !== email) {
+     res.send({ admin: false })
+     }
+
+     const query = { email: email }
+     const user = await usersCollection.findOne(query);
+     const result = { admin: user?.role === 'admin' }
+     res.send(result);
+})
 
 
 app.patch('/users/admin/:id', async (req,res)=>{
@@ -108,7 +118,7 @@ app.patch('/users/admin/:id', async (req,res)=>{
      res.send(result)
  })
 
-app.delete('/user/admin/:id',async(req,res)=>{
+app.delete('/user/admin/:id', async(req,res)=>{
      const id = req.params.id;
      const filter = {_id : new ObjectId(id)}
      const result = await usersCollection.deleteOne(filter)
@@ -179,7 +189,7 @@ app.delete('/carts/:id', async (req, res) => {
    })
 
    // payment related api
-   app.post('/payments', verifyJWT, async(req, res) =>{
+   app.post('/payments', async(req, res) =>{
      const payment = req.body;
      const insertResult = await paymentCollection.insertOne(payment);
 
@@ -190,8 +200,19 @@ app.delete('/carts/:id', async (req, res) => {
      res.send({ insertResult, delateResult});
    })
    app.get('/history',verifyJWT,  async(req,res)=>{
-     const result = await paymentCollection.find().toArray()
-     res.send(result)
+     const email = req.query.email;
+
+     if (!email) {
+       res.send([]);
+     }
+     const decodedEmail = req.decoded.email;
+     if (email !== decodedEmail) {
+     return res.status(403).send({ error: true, message: 'Forbidden access' })
+     }
+
+     const query = { email: email };
+     const result = await paymentCollection.find(query).toArray();
+     res.send(result);
    })
     
 

@@ -75,6 +75,15 @@ async function run() {
      res.send(result)
     })
 
+
+
+// users api
+app.get('/users', async(req, res)=>{
+     const result = await usersCollection.find().toArray()
+     res.send(result)
+})
+
+
 //     users api
 app.post('/users', async(req,res)=>{
      const user = req.body;
@@ -86,6 +95,43 @@ app.post('/users', async(req,res)=>{
      const result = await usersCollection.insertOne(user)
      res.send(result);
 })
+
+
+
+app.patch('/users/admin/:id', async (req,res)=>{
+     const id = req.params.id;
+     const filter = {_id : new ObjectId(id)}
+     const updateDoc = {
+          $set:{role : "admin"}
+     }
+     const result = await usersCollection.updateOne(filter,updateDoc)
+     res.send(result)
+ })
+
+app.delete('/user/admin/:id',async(req,res)=>{
+     const id = req.params.id;
+     const filter = {_id : new ObjectId(id)}
+     const result = await usersCollection.deleteOne(filter)
+     res.send(result)
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/carts', verifyJWT,  async (req, res) => {
      const email = req.query.email;
 

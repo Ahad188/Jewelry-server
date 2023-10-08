@@ -143,13 +143,13 @@ app.delete('/carts/:id', async (req, res) => {
      console.log("result 343423",delateResult);
      res.send({ insertResult, delateResult});
    })
-   app.get('/history',  async(req,res)=>{
+   app.get('/history',verifyJWT,  async(req,res)=>{
      const result = await paymentCollection.find().toArray()
      res.send(result)
    })
     
 
-   app.delete('/history/:id', async (req, res) => {
+   app.delete('/history/:id',verifyJWT, async (req, res) => {
      const id = req.params.id;
      
      const query = { _id: new ObjectId(id) };

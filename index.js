@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const app = express()
+const stripe = require('stripe')(process.env.PAYMENT_KEY)
  
 const port = process.env.PORT ||5000;
 
@@ -54,6 +55,7 @@ async function run() {
     const productCollection = client.db('JewelryDB').collection('all-product')
     const reviewsCollection = client.db('JewelryDB').collection('reviews')
     const cartCollection = client.db('JewelryDB').collection('carts')
+    const paymentCollection = client.db('JewelryDB').collection('payments')
 
     //     JWT API
     app.post('/jwt', (req,res)=>{
@@ -107,7 +109,7 @@ app.post('/carts', async (req,res)=>{
 })
 
 
-app.delete('/card/:id', async (req, res) => {
+app.delete('/carts/:id', async (req, res) => {
      const id = req.params.id;
      
      const query = { _id: new ObjectId(id) };
@@ -115,7 +117,32 @@ app.delete('/card/:id', async (req, res) => {
       
      res.send(result);
    })
+   // create payment intent
+   app.post('/create-payment-intent',verifyJWT, async (req, res) => {
+     const { price } = req.body;
+     const amount = parseInt(price * 100);;
+     const paymentIntent = await stripe.paymentIntents.create({
+       amount: amount,
+       currency: 'usd',
+       payment_method_types: ['card']
+     });
 
+     res.send({
+       clientSecret: paymentIntent.client_secret
+     })
+   })
+
+   // payment related api
+   app.post('/payments', verifyJWT, async(req, res) =>{
+     const payment = req.body;
+     const insertResult = await paymentCollection.insertOne(payment);
+
+     const query = {_id : {$in: payment.cartItems.map(id => new ObjectId(id))}}
+     const delateResult = await cartCollection.deleteMany(query)
+
+     console.log("result 343423",delateResult);
+     res.send({ insertResult, delateResult});
+   })
 
 
 

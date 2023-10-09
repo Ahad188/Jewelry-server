@@ -153,7 +153,22 @@ app.delete('/user/admin/:id', async(req,res)=>{
      res.send(result)
 })
 
+// admin dashboard
+app.get('/admin-status',verifyJWT,verifyAdmin, async(req,res)=>{
+     const user = await usersCollection.estimatedDocumentCount();
+     const product = await   productCollection.estimatedDocumentCount();
+     const order = await paymentCollection.estimatedDocumentCount();
 
+     const payments = await paymentCollection.find().toArray()
+     const revenue = payments.reduce((sum,payment)=>sum + payment.price,0)
+     
+     res.send({
+          revenue,
+          user,
+          product,
+          order,
+     })
+   })
 
 
 

@@ -63,11 +63,33 @@ async function run() {
      const token = jwt.sign(user, process.env.Access_TOKEN, { expiresIn: '1h' })
      res.send({token})
 })
+
+const verifyAdmin = async (req, res, next) => {
+     const email = req.decoded.email;
+     const query = { email: email }
+     const user = await usersCollection.findOne(query);
+     if (user?.role !== 'admin') {
+     return res.status(403).send({ error: true, message: 'forbidden message' });
+     }
+     next();
+}
+
+
+
+
      // get product
     app.get('/product',async (req,res)=>{
      const result = await productCollection.find().toArray();
      res.send(result)
     })
+    app.post('/product', verifyJWT, verifyAdmin, async (req, res) => {
+     const newItem = req.body;
+     const result = await productCollection.insertOne(newItem)
+     res.send(result);
+   })
+
+
+
 //     get reviews
     app.get('/reviews',async (req,res)=>{
      const result = await reviewsCollection.find().toArray();
@@ -77,7 +99,7 @@ async function run() {
 
 
 // users api
-app.get('/users',verifyJWT, async(req, res)=>{
+app.get('/users',verifyJWT,verifyAdmin, async(req, res)=>{
      const result = await usersCollection.find().toArray()
      res.send(result)
 })
